@@ -1,11 +1,21 @@
 ﻿// validate parameters
+using System.Net.Http.Json;
+using System.Text.Json;
+
 if (args.Length != 2 || !int.TryParse(args[1], out int votes))
 {
-    Console.WriteLine("Usage: dotnet run <city> <votes>");
-    return;
+  Console.WriteLine("Usage: dotnet run <city> <votes>");
+  return;
 }
 var city = args[0];
+
 Console.WriteLine($"Find outlet for {city} with minimal {votes} votes.");
+
+var httpClient = new HttpClient();
+var jsonSerializerOptions = new JsonSerializerOptions
+{
+  PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+};
 
 string outlet = findOutlet(city, votes);
 
@@ -13,5 +23,16 @@ Console.WriteLine($"Finest outlet for {city} is {outlet}.");
 
 string findOutlet(string city, int voutes)
 {
-  return "<TODO>";
+  var urlFormat = $"https://jsonmock.hackerrank.com/api/food_outlets?city={city}&page={{0}}";
+  ResultsDto? resultDto = httpClient.GetFromJsonAsync<ResultsDto>(string.Format(urlFormat, 1), jsonSerializerOptions).Result;
+  Console.WriteLine($"Total pages: {resultDto.TotalPages}");
+  return "TODO";
+}
+
+public class ResultsDto
+{
+  public int Page { get; set;  }
+  public int PerPage { get; set;  }
+  public int Total { get; set;  }
+  public int TotalPages { get; set;  }
 }
