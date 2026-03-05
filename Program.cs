@@ -30,24 +30,27 @@ string findOutlet(string city, int voutes)
     return ""; // not found
   }
   var finest = findFinestOutletWithMinimalVotes(resultDto.Data, votes);
-  for (int i=2; i < resultDto.TotalPages; i++)
+  var are = new AutoResetEvent(true);
+  Parallel.For(2, resultDto.TotalPages + 1, (int page) =>
   {
-    ResultsDto? batchResult = httpClient.GetFromJsonAsync<ResultsDto>(string.Format(urlFormat, 1), jsonSerializerOptions).Result;
+    ResultsDto? batchResult = httpClient.GetFromJsonAsync<ResultsDto>(string.Format(urlFormat, page), jsonSerializerOptions).Result;
     if (batchResult is not null && batchResult.Data is not null && batchResult.Data.Any())
     {
       var batchFinest = findFinestOutletWithMinimalVotes(resultDto.Data, votes);
+      are.WaitOne();
       if (batchFinest is not null && batchFinest.UserRating.AverageRating > batchFinest.UserRating.AverageRating)
       {
         finest = batchFinest;
       }
+      are.Set();
     }
-    
-  }
+
+  });
   return finest?.Name;
 }
 OutletDto? findFinestOutletWithMinimalVotes(List<OutletDto> outlets, int votes)
 {
-  return outlets.Where(o => o.UserRating.Votes >= votes).OrderByDescending(o => o.UserRating.AverageRating).FirstOrDefault();
+  return outlets.AsParallel().Where(o => o.UserRating.Votes >= votes).AsSequential().OrderByDescending(o => o.UserRating.AverageRating).FirstOrDefault();
 }
 
 public class ResultsDto
