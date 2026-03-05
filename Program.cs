@@ -31,21 +31,39 @@ string findOutlet(string city, int voutes)
   }
   var finest = findFinestOutletWithMinimalVotes(resultDto.Data, votes);
   var are = new AutoResetEvent(true);
-  Parallel.For(2, resultDto.TotalPages + 1, (int page) =>
-  {
+  Parallel.For<OutletDto?>(2, resultDto.TotalPages + 1, 
+    //new ParallelOptions {  MaxDegreeOfParallelism = 2}, // this was set for debuging to limit to 2 threads, but in general let runtime to decide the optimal number
+    () => null, (page, _, threadFinest) =>  {
+    //Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] Staring Page {page} with threadFinest: {threadFinest}.");
     ResultsDto? batchResult = httpClient.GetFromJsonAsync<ResultsDto>(string.Format(urlFormat, page), jsonSerializerOptions).Result;
-    if (batchResult is not null && batchResult.Data is not null && batchResult.Data.Any())
+    OutletDto? batchFinest = findFinestOutletWithMinimalVotes(resultDto.Data, votes);
+    if (threadFinest is null)
     {
-      var batchFinest = findFinestOutletWithMinimalVotes(resultDto.Data, votes);
+      //Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] Page {page} returning batchFinset: {batchFinest} as no threadFinest");
+      return batchFinest;
+    }
+    if (batchFinest is not null && batchFinest.UserRating.AverageRating > threadFinest.UserRating.AverageRating)
+    {
+      //Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] Page {page} returning batchFinset: {batchFinest} as better");
+      return batchFinest;
+    }
+    //Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] Page {page} returning threadFinest: {threadFinest} as better than batchFinnest");
+    return threadFinest;
+  }, 
+  (threadFinest) =>  {
+    if (threadFinest is not null)
+    {
       are.WaitOne();
-      if (batchFinest is not null && batchFinest.UserRating.AverageRating > batchFinest.UserRating.AverageRating)
+      //Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] Compare finest {finest} with threadFinest {threadFinest}");
+      if (threadFinest is not null && threadFinest.UserRating.AverageRating > threadFinest.UserRating.AverageRating)
       {
-        finest = batchFinest;
+        //Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] ThreadFinest {threadFinest} is better than {finest}");
+        finest = threadFinest;
       }
       are.Set();
     }
-
   });
+  Console.WriteLine($"Finest outlet is {finest}.");
   return finest?.Name;
 }
 OutletDto? findFinestOutletWithMinimalVotes(List<OutletDto> outlets, int votes)
@@ -66,6 +84,10 @@ public class OutletDto
   public string City { get;set; }
   public string Name { get;set; }
   public UserRatingDto UserRating  { get;set; }
+  public override string ToString()
+  {
+    return $"Outlet {Name} rating {UserRating.AverageRating} and votes {UserRating.Votes}";
+  }
 }
 public class UserRatingDto
 {
