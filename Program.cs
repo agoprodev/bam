@@ -25,8 +25,29 @@ string findOutlet(string city, int voutes)
 {
   var urlFormat = $"https://jsonmock.hackerrank.com/api/food_outlets?city={city}&page={{0}}";
   ResultsDto? resultDto = httpClient.GetFromJsonAsync<ResultsDto>(string.Format(urlFormat, 1), jsonSerializerOptions).Result;
-  Console.WriteLine($"Total pages: {resultDto.TotalPages}");
-  return "TODO";
+  if (resultDto is null || resultDto.Total == 0)
+  {
+    return ""; // not found
+  }
+  var finest = findFinestOutletWithMinimalVotes(resultDto.Data, votes);
+  for (int i=2; i < resultDto.TotalPages; i++)
+  {
+    ResultsDto? batchResult = httpClient.GetFromJsonAsync<ResultsDto>(string.Format(urlFormat, 1), jsonSerializerOptions).Result;
+    if (batchResult is not null && batchResult.Data is not null && batchResult.Data.Any())
+    {
+      var batchFinest = findFinestOutletWithMinimalVotes(resultDto.Data, votes);
+      if (batchFinest is not null && batchFinest.UserRating.AverageRating > batchFinest.UserRating.AverageRating)
+      {
+        finest = batchFinest;
+      }
+    }
+    
+  }
+  return finest?.Name;
+}
+OutletDto? findFinestOutletWithMinimalVotes(List<OutletDto> outlets, int votes)
+{
+  return outlets.Where(o => o.UserRating.Votes >= votes).OrderByDescending(o => o.UserRating.AverageRating).FirstOrDefault();
 }
 
 public class ResultsDto
@@ -35,4 +56,16 @@ public class ResultsDto
   public int PerPage { get; set;  }
   public int Total { get; set;  }
   public int TotalPages { get; set;  }
+  public List<OutletDto> Data { get; set; }
+}
+public class OutletDto
+{
+  public string City { get;set; }
+  public string Name { get;set; }
+  public UserRatingDto UserRating  { get;set; }
+}
+public class UserRatingDto
+{
+  public decimal AverageRating { get;set; }
+  public int Votes { get;set; }
 }
