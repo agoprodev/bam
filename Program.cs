@@ -29,7 +29,7 @@ string findOutlet(string city, int voutes)
   {
     return ""; // not found
   }
-  var finest = findFinestOutletWithMinimalVotes(resultDto.Data, votes);
+  var allFinest = findFinestOutletWithMinimalVotes(resultDto.Data, votes);
   var are = new AutoResetEvent(true);
   Parallel.For<OutletDto?>(2, resultDto.TotalPages + 1, 
     //new ParallelOptions {  MaxDegreeOfParallelism = 2}, // this was set for debuging to limit to 2 threads, but in general let runtime to decide the optimal number
@@ -55,16 +55,16 @@ string findOutlet(string city, int voutes)
     {
       are.WaitOne();
       //Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] Compare finest {finest} with threadFinest {threadFinest}");
-      if (threadFinest is not null && threadFinest.UserRating.AverageRating > threadFinest.UserRating.AverageRating)
+      if (threadFinest is not null && threadFinest.UserRating.AverageRating > allFinest.UserRating.AverageRating)
       {
         //Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] ThreadFinest {threadFinest} is better than {finest}");
-        finest = threadFinest;
+        allFinest = threadFinest;
       }
       are.Set();
     }
   });
-  Console.WriteLine($"Finest outlet is {finest}.");
-  return finest?.Name;
+  Console.WriteLine($"Finest outlet is {allFinest}.");
+  return allFinest?.Name;
 }
 OutletDto? findFinestOutletWithMinimalVotes(List<OutletDto> outlets, int votes)
 {
