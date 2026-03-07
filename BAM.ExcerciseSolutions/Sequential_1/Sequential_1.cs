@@ -21,16 +21,17 @@ public class Sequential_1
     var finest = findFinestOutletWithMinimalVotes(resultDto.Data, votes);
     for (int i = 2; i < resultDto.TotalPages; i++)
     {
-      ResultsDto? batchResult = httpClient.GetFromJsonAsync<ResultsDto>(string.Format(urlFormat, 1), jsonSerializerOptions).Result;
+      ResultsDto? batchResult = httpClient.GetFromJsonAsync<ResultsDto>(string.Format(urlFormat, i), jsonSerializerOptions).Result;
       if (batchResult is not null && batchResult.Data is not null && batchResult.Data.Any())
       {
         var batchFinest = findFinestOutletWithMinimalVotes(resultDto.Data, votes);
-        if (batchFinest is not null && batchFinest.UserRating.AverageRating > batchFinest.UserRating.AverageRating)
+        if (batchFinest is not null && batchFinest.UserRating.AverageRating > (finest?.UserRating.AverageRating ?? 0))
         {
           finest = batchFinest;
         }
       }
     }
+    Console.WriteLine($"Finest outlet is {finest}.");
     return finest?.Name;
   }
   OutletDto? findFinestOutletWithMinimalVotes(List<OutletDto> outlets, int votes)
@@ -51,6 +52,10 @@ public class Sequential_1
     public string City { get;set; }
     public string Name { get;set; }
     public UserRatingDto UserRating  { get;set; }
+    public override string ToString()
+    {
+      return $"Outlet {Name} rating {UserRating.AverageRating} and votes {UserRating.Votes}";
+    }
   }
   class UserRatingDto
   {

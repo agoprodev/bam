@@ -48,7 +48,7 @@ public class Parallel_2
       {
         are.WaitOne();
         //Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] Compare finest {finest} with threadFinest {threadFinest}");
-        if (threadFinest is not null && threadFinest.UserRating.AverageRating > allFinest.UserRating.AverageRating)
+        if (threadFinest is not null && threadFinest.UserRating.AverageRating > (allFinest?.UserRating.AverageRating ?? 0))
         {
           //Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] ThreadFinest {threadFinest} is better than {finest}");
           allFinest = threadFinest;

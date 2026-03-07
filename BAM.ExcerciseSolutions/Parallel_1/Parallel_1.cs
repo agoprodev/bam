@@ -30,7 +30,7 @@ public class Parallel_1
       {
         var batchFinest = findFinestOutletWithMinimalVotes(resultDto.Data, votes);
         are.WaitOne();
-        if (batchFinest is not null && batchFinest.UserRating.AverageRating > batchFinest.UserRating.AverageRating)
+        if (batchFinest is not null && batchFinest.UserRating.AverageRating > (finest?.UserRating.AverageRating ?? 0))
         {
           finest = batchFinest;
         }
@@ -38,6 +38,7 @@ public class Parallel_1
       }
 
     });
+    Console.WriteLine($"Finest outlet is {finest}.");
     return finest?.Name;
   }
 
@@ -58,6 +59,10 @@ public class Parallel_1
     public string City { get;set; }
     public string Name { get;set; }
     public UserRatingDto UserRating  { get;set; }
+    public override string ToString()
+    {
+      return $"Outlet {Name} rating {UserRating.AverageRating} and votes {UserRating.Votes}";
+    }
   }
   class UserRatingDto
   {

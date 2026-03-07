@@ -27,7 +27,7 @@ public class Parallel_3
       () => null, (page, _, threadFinest) =>
       {
         //Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] Staring Page {page} with threadFinest: {threadFinest}.");
-        byte[] jsonBatch = httpClient.GetByteArrayAsync(string.Format(urlFormat, 1)).Result;
+        byte[] jsonBatch = httpClient.GetByteArrayAsync(string.Format(urlFormat, page)).Result;
         OutletInfo? batchFinest = findFinestOutletWithMinimalVotesFirst(jsonBatch, votes, out int _);
         if (threadFinest is null)
         {
@@ -48,7 +48,7 @@ public class Parallel_3
       {
         are.WaitOne();
         //Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] Compare finest {finest} with threadFinest {threadFinest}");
-        if (threadFinest is not null && threadFinest.AverageRating > allFinest.AverageRating)
+        if (threadFinest is not null && threadFinest.AverageRating > (allFinest?.AverageRating ?? 0))
         {
           //Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] ThreadFinest {threadFinest} is better than {finest}");
           allFinest = threadFinest;
