@@ -17,19 +17,20 @@ public class Parallel_2(string? urlFormat = null)
   };
   public string findOutlet(string city, int votes)
   {
-    ResultsDto? resultDto = httpClient.GetFromJsonAsync<ResultsDto>(string.Format(urlFormat, city, 1), jsonSerializerOptions).Result;
-    if (resultDto is null || resultDto.Total == 0)
+    ResultsDto? batchResult = httpClient.GetFromJsonAsync<ResultsDto>(string.Format(urlFormat, city, 1), jsonSerializerOptions).Result;
+    if (batchResult is null || batchResult.Total == 0)
     {
       return ""; // not found
     }
-    var allFinest = findFinestOutletWithMinimalVotes(resultDto.Data, votes);
+    int pages = batchResult.TotalPages;
+    var allFinest = findFinestOutletWithMinimalVotes(batchResult.Data, votes);
     var are = new AutoResetEvent(true);
-    Parallel.For<OutletDto?>(2, resultDto.TotalPages + 1,
+    Parallel.For<OutletDto?>(2, pages + 1,
       //new ParallelOptions {  MaxDegreeOfParallelism = 2}, // this was set for debuging to limit to 2 threads, but in general let runtime to decide the optimal number
       () => null, (page, _, threadFinest) => {
         //Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] Staring Page {page} with threadFinest: {threadFinest}.");
-        ResultsDto? batchResult = httpClient.GetFromJsonAsync<ResultsDto>(string.Format(urlFormat, city, page), jsonSerializerOptions).Result;
-        OutletDto? batchFinest = findFinestOutletWithMinimalVotes(resultDto.Data, votes);
+        batchResult = httpClient.GetFromJsonAsync<ResultsDto>(string.Format(urlFormat, city, page), jsonSerializerOptions).Result;
+        OutletDto? batchFinest = findFinestOutletWithMinimalVotes(batchResult.Data, votes);
         if (threadFinest is null)
         {
           //Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] Page {page} returning batchFinset: {batchFinest} as no threadFinest");

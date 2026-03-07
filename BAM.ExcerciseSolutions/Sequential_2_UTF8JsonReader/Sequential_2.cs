@@ -19,7 +19,7 @@ public class Sequential_2(string? urlFormat = null)
       return ""; // not found
     }
     OutletInfo? finest = findFinestOutletWithMinimalVotesFirst(jsonBatchOne, votes, out int pages);
-    for (int i = 2; i < pages; i++)
+    for (int i = 2; i <= pages; i++)
     {
       byte[] jsonBatch = httpClient.GetByteArrayAsync(string.Format(urlFormat, city, i)).Result;
       OutletInfo? batchFinest = findFinestOutletWithMinimalVotesFirst(jsonBatch, votes, out int _);

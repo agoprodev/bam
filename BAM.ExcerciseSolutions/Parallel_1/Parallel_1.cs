@@ -18,19 +18,20 @@ public class Parallel_1(string? urlFormat = null)
   public string findOutlet(string city, int votes)
   {
     
-    ResultsDto? resultDto = httpClient.GetFromJsonAsync<ResultsDto>(string.Format(urlFormat, city, 1), jsonSerializerOptions).Result;
-    if (resultDto is null || resultDto.Total == 0)
+    ResultsDto? batchResult = httpClient.GetFromJsonAsync<ResultsDto>(string.Format(urlFormat, city, 1), jsonSerializerOptions).Result;
+    if (batchResult is null || batchResult.Total == 0)
     {
       return ""; // not found
     }
-    var finest = findFinestOutletWithMinimalVotes(resultDto.Data, votes);
+    var finest = findFinestOutletWithMinimalVotes(batchResult.Data, votes);
     var are = new AutoResetEvent(true);
-    Parallel.For(2, resultDto.TotalPages + 1, (int page) =>
+    int pages = batchResult.TotalPages;
+    Parallel.For(2, pages + 1, (int page) =>
     {
-      ResultsDto? batchResult = httpClient.GetFromJsonAsync<ResultsDto>(string.Format(urlFormat, city, page), jsonSerializerOptions).Result;
+      batchResult = httpClient.GetFromJsonAsync<ResultsDto>(string.Format(urlFormat, city, page), jsonSerializerOptions).Result;
       if (batchResult is not null && batchResult.Data is not null && batchResult.Data.Any())
       {
-        var batchFinest = findFinestOutletWithMinimalVotes(resultDto.Data, votes);
+        var batchFinest = findFinestOutletWithMinimalVotes(batchResult.Data, votes);
         are.WaitOne();
         if (batchFinest is not null && batchFinest.UserRating.AverageRating > (finest?.UserRating.AverageRating ?? 0))
         {
