@@ -1,4 +1,5 @@
 ﻿using BAM.ExcerciseSolutions;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 
 // validate parameters
@@ -17,15 +18,22 @@ var solution = args[0];
 var city = args[1];
 Console.WriteLine($"Find outlet for {city} with minimal {votes} votes.");
 
+var baseUrl = "https://raw.githubusercontent.com/agoprodev/bam-data/refs/heads/main/v1/data_100/data_{0}_{1}.json";
+//Debugger.Launch();
+Stopwatch stopwatch = Stopwatch.StartNew();
 string outlet = solution switch
 {
-  "s1" => new Sequential_1().findOutlet(city, votes),
-  "s2" => new Sequential_2().findOutlet(city, votes),
-  "p1" => new Parallel_1().findOutlet(city, votes),
-  "p2" => new Parallel_2().findOutlet(city, votes),
-  "p3" => new Parallel_3().findOutlet(city, votes),
+  "s1" => new Sequential_1(baseUrl).findOutlet(city, votes),
+  "s2" => new Sequential_2(baseUrl).findOutlet(city, votes),
+  "p1" => new Parallel_1(baseUrl).findOutlet(city, votes),
+  "p2" => new Parallel_2(baseUrl).findOutlet(city, votes),
+  "p3" => new Parallel_3(baseUrl).findOutlet(city, votes),
   _ => throw new ArgumentException($"Unknown solution: {solution}")
 };
+stopwatch.Stop();
+Console.WriteLine($"Execution time: {stopwatch.Elapsed}.");
+Console.WriteLine($"Execution time: {stopwatch.ElapsedMilliseconds} ms.");
+
 if (string.IsNullOrEmpty(outlet))
 {
   Console.WriteLine($"No outlet found for {city} with minimal {votes} votes.");
