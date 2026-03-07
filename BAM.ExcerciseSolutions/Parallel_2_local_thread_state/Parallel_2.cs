@@ -7,8 +7,9 @@ using System.Text.Json;
 
 namespace BAM.ExcerciseSolutions;
 
-public class Parallel_2
+public class Parallel_2(string? urlFormat = null)
 {
+  readonly string urlFormat = urlFormat ?? $"https://jsonmock.hackerrank.com/api/food_outlets?city={{0}}&page={{1}}";
   readonly HttpClient httpClient = new HttpClient();
   readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions
   {
@@ -16,8 +17,7 @@ public class Parallel_2
   };
   public string findOutlet(string city, int votes)
   {
-    var urlFormat = $"https://jsonmock.hackerrank.com/api/food_outlets?city={city}&page={{0}}";
-    ResultsDto? resultDto = httpClient.GetFromJsonAsync<ResultsDto>(string.Format(urlFormat, 1), jsonSerializerOptions).Result;
+    ResultsDto? resultDto = httpClient.GetFromJsonAsync<ResultsDto>(string.Format(urlFormat, city, 1), jsonSerializerOptions).Result;
     if (resultDto is null || resultDto.Total == 0)
     {
       return ""; // not found
@@ -28,7 +28,7 @@ public class Parallel_2
       //new ParallelOptions {  MaxDegreeOfParallelism = 2}, // this was set for debuging to limit to 2 threads, but in general let runtime to decide the optimal number
       () => null, (page, _, threadFinest) => {
         //Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] Staring Page {page} with threadFinest: {threadFinest}.");
-        ResultsDto? batchResult = httpClient.GetFromJsonAsync<ResultsDto>(string.Format(urlFormat, page), jsonSerializerOptions).Result;
+        ResultsDto? batchResult = httpClient.GetFromJsonAsync<ResultsDto>(string.Format(urlFormat, city, page), jsonSerializerOptions).Result;
         OutletDto? batchFinest = findFinestOutletWithMinimalVotes(resultDto.Data, votes);
         if (threadFinest is null)
         {

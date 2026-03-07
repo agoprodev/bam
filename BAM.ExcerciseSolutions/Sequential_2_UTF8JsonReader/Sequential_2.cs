@@ -3,8 +3,9 @@ using System.Text.Json;
 
 namespace BAM.ExcerciseSolutions;
 
-public class Sequential_2
+public class Sequential_2(string? urlFormat = null)
 {
+  readonly string urlFormat = urlFormat ?? $"https://jsonmock.hackerrank.com/api/food_outlets?city={{0}}&page={{1}}";
   readonly HttpClient httpClient = new HttpClient();
   readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions
   {
@@ -12,8 +13,7 @@ public class Sequential_2
   };
   public string findOutlet(string city, int votes)
   {
-    var urlFormat = $"https://jsonmock.hackerrank.com/api/food_outlets?city={city}&page={{0}}";
-    byte[] jsonBatchOne = httpClient.GetByteArrayAsync(string.Format(urlFormat, 1)).Result;
+    byte[] jsonBatchOne = httpClient.GetByteArrayAsync(string.Format(urlFormat, city, 1)).Result;
     if (jsonBatchOne is null || jsonBatchOne.Length == 0)
     {
       return ""; // not found
@@ -21,7 +21,7 @@ public class Sequential_2
     OutletInfo? finest = findFinestOutletWithMinimalVotesFirst(jsonBatchOne, votes, out int pages);
     for (int i = 2; i < pages; i++)
     {
-      byte[] jsonBatch = httpClient.GetByteArrayAsync(string.Format(urlFormat, i)).Result;
+      byte[] jsonBatch = httpClient.GetByteArrayAsync(string.Format(urlFormat, city, i)).Result;
       OutletInfo? batchFinest = findFinestOutletWithMinimalVotesFirst(jsonBatch, votes, out int _);
       if (batchFinest is not null && batchFinest.AverageRating > (finest?.AverageRating ?? 0))
       {

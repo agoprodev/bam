@@ -5,8 +5,9 @@ using System.Text.Json;
 
 namespace BAM.ExcerciseSolutions;
 
-public class Parallel_3
+public class Parallel_3(string? urlFormat = null)
 {
+  readonly string urlFormat = urlFormat ?? $"https://jsonmock.hackerrank.com/api/food_outlets?city={{0}}&page={{1}}";
   readonly HttpClient httpClient = new HttpClient();
   readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions
   {
@@ -14,8 +15,7 @@ public class Parallel_3
   };
   public string findOutlet(string city, int votes)
   {
-    var urlFormat = $"https://jsonmock.hackerrank.com/api/food_outlets?city={city}&page={{0}}";
-    byte[] jsonBatchOne = httpClient.GetByteArrayAsync(string.Format(urlFormat, 1)).Result;
+    byte[] jsonBatchOne = httpClient.GetByteArrayAsync(string.Format(urlFormat, city, 1)).Result;
     if (jsonBatchOne is null || jsonBatchOne.Length == 0)
     {
       return ""; // not found
@@ -27,7 +27,7 @@ public class Parallel_3
       () => null, (page, _, threadFinest) =>
       {
         //Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}] Staring Page {page} with threadFinest: {threadFinest}.");
-        byte[] jsonBatch = httpClient.GetByteArrayAsync(string.Format(urlFormat, page)).Result;
+        byte[] jsonBatch = httpClient.GetByteArrayAsync(string.Format(urlFormat, city, page)).Result;
         OutletInfo? batchFinest = findFinestOutletWithMinimalVotesFirst(jsonBatch, votes, out int _);
         if (threadFinest is null)
         {
